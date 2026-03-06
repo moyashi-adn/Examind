@@ -799,32 +799,7 @@ select option { background: #fff; }
   .tab { white-space: nowrap; }
 }
 
-/* STREAK */
-.streak-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 20px;
-  font-size: 0.83rem;
-}
-.streak-fire { font-size: 1.1rem; }
-.streak-info { flex: 1; }
-.streak-num { font-weight: 600; color: var(--text); }
-.streak-label { color: var(--muted); font-size: 0.75rem; }
-.streak-days { display: flex; gap: 5px; }
-.streak-day {
-  width: 28px; height: 28px;
-  border-radius: 6px;
-  background: var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.65rem; font-weight: 600; color: var(--muted);
-}
-.streak-day.done { background: #22c55e; color: #fff; }
-.streak-day.today { border: 2px solid #22c55e; color: var(--text); background: var(--surface); }
+
 
 /* WRONG ANSWERS */
 .review-item {
@@ -1085,16 +1060,6 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
 
     <!-- API handled server-side -->
 
-    <!-- STREAK -->
-    <div class="streak-bar" id="streakBar">
-      <div class="streak-fire">🔥</div>
-      <div class="streak-info">
-        <div class="streak-num" id="streakNum">0 day streak</div>
-        <div class="streak-label">Keep it up — study every day!</div>
-      </div>
-      <div class="streak-days" id="streakDays"></div>
-    </div>
-
     <!-- TABS -->
     <div class="tabs">
       <button class="tab active" onclick="switchSec('quiz', this)">Quiz</button>
@@ -1117,7 +1082,7 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
           <div class="upload-types">PDF, Word, TXT, or image of notes</div>
           <div id="fileTag"></div>
         </div>
-        <textarea id="topicInput" placeholder="Type a topic, paste a URL (YouTube/article), or paste your study notes / document text here..."></textarea>
+        <textarea id="topicInput" placeholder="e.g. World War II, Photosynthesis, or paste your notes here..."></textarea>
         <div class="url-note" id="inputHint" style="margin-top:8px"></div>
         <div class="row">
           <div class="field">
@@ -1208,7 +1173,7 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
           <div class="upload-types">PDF, Word, TXT, or image of notes</div>
           <div id="flashFileTag"></div>
         </div>
-        <textarea id="flashTopic" placeholder="Type a topic, paste a URL, or paste your notes..."></textarea>
+        <textarea id="flashTopic" placeholder="e.g. Spanish verbs, Periodic table, or paste your notes here..."></textarea>
         <div class="row">
           <div class="field">
             <label>Cards</label>
@@ -1380,6 +1345,8 @@ async function callGroq(prompt) {
 async function generateQuiz() {
   const t = document.getElementById('topicInput').value.trim();
   if (!t && !uploadedFileContent) { toast('Enter a topic or upload a file first'); return; }
+  if (t && t.length < 3 && !uploadedFileContent) { toast('Topic is too short — be more specific!'); return; }
+  if (t && /^[^a-zA-Z0-9À-ž]+$/.test(t) && !uploadedFileContent) { toast('Please enter a valid topic'); return; }
   const n = document.getElementById('numQ').value;
   const diff = document.getElementById('difficulty').value;
   const type = document.getElementById('qType').value;
@@ -1668,6 +1635,8 @@ function removeFlashFile() {
 async function generateFlash() {
   const t = document.getElementById('flashTopic').value.trim();
   if (!t && !flashFileContent) { toast('Enter a topic or upload a file first'); return; }
+  if (t && t.length < 3 && !flashFileContent) { toast('Topic is too short — be more specific!'); return; }
+  if (t && /^[^a-zA-Z0-9À-ž]+$/.test(t) && !flashFileContent) { toast('Please enter a valid topic'); return; }
   const n = document.getElementById('numCards').value;
   show('flashLoading'); hide('flashInput');
   try {
@@ -1687,15 +1656,21 @@ async function generateFlash() {
 
 function showCard() {
   const card = document.getElementById('flashcard');
-  // Remove flipped first, then update content after transition settles
+  const c = flashcards[fIdx];
+  // Update content FIRST while potentially still flipped
+  document.getElementById('fcFront').textContent = c.front;
+  document.getElementById('fcBack').textContent = c.back;
+  document.getElementById('fcCount').textContent = `${fIdx+1} / ${flashcards.length}`;
+  document.getElementById('flashProgress').style.width = `${((fIdx+1)/flashcards.length)*100}%`;
+  // Then unflip - content is already updated so no flash
+  card.style.transition = 'none';
   card.classList.remove('flipped');
-  setTimeout(() => {
-    const c = flashcards[fIdx];
-    document.getElementById('fcFront').textContent = c.front;
-    document.getElementById('fcBack').textContent = c.back;
-    document.getElementById('fcCount').textContent = `${fIdx+1} / ${flashcards.length}`;
-    document.getElementById('flashProgress').style.width = `${((fIdx+1)/flashcards.length)*100}%`;
-  }, 220);
+  // Re-enable transition after a frame
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.style.transition = '';
+    });
+  });
 }
 
 function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); playSound('flip'); }
@@ -1951,23 +1926,23 @@ async function resolveInput(raw) {
     if (['png','jpg','jpeg','webp'].includes(ext)) {
       toast('Analyzing image...');
       try {
-        // Send actual base64 image to AI for real OCR/analysis
         const base64 = uploadedFileContent.split(',')[1];
         const mimeType = uploadedFileContent.split(';')[0].split(':')[1];
         const res = await fetch('/.netlify/functions/quiz', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: `Look at this image carefully. Extract and summarize ALL the educational content, text, diagrams, and information visible in it. Write a detailed summary of the study material shown so I can generate quiz questions from it. Focus on the actual subject matter — facts, concepts, definitions, formulas, dates, or any learning content present. Just write the content summary, no preamble.`,
+            prompt: `This is a photo of study material such as handwritten notes, a textbook page, a worksheet, or a diagram. Please read and extract ALL the text, facts, concepts, formulas, dates, definitions, and any other educational content you can see. Ignore any mention of the image format or file type. Provide a detailed summary of the actual subject matter so I can generate quiz questions from it. Just write the educational content, no preamble.`,
             image: { base64, mimeType }
           })
         });
         if (res.ok) {
           const d = await res.json();
-          return d.result || uploadedFileName;
+          if (d.result && d.result.length > 50) return d.result;
         }
       } catch(e) {}
-      return `Study material from image: ${uploadedFileName}`;
+      toast('Could not read image content. Try uploading a clearer photo or PDF instead.');
+      return '';
     }
     // For text-based files, use extracted text directly
     return uploadedFileContent;
@@ -1982,19 +1957,28 @@ async function resolveInput(raw) {
 
   // For URLs, ask AI to generate quiz based on the URL path/domain topic
   // rather than trying to scrape (which doesn't work from frontend)
+  // Block non-educational URLs
+  const nonEduDomains = ['canva.com','facebook.com','instagram.com','twitter.com','x.com','tiktok.com','pinterest.com','linkedin.com','reddit.com','netflix.com','spotify.com','twitch.tv','discord.com','whatsapp.com'];
   const urlObj = (() => { try { return new URL(val.startsWith('http') ? val : 'https://' + val); } catch(e) { return null; } })();
-  const pathHint = urlObj ? (urlObj.hostname + urlObj.pathname).replace(/[-_/]/g, ' ').replace(/\.(html|php|aspx?)$/i, '') : val;
+  const hostname = urlObj ? urlObj.hostname.replace('www.','') : '';
+
+  if (nonEduDomains.some(d => hostname.includes(d))) {
+    toast('That URL is not a study resource. Try a YouTube video, article, or Wikipedia link.');
+    return '';
+  }
+
+  const pathHint = urlObj ? (urlObj.hostname + urlObj.pathname).replace(/[-_/]/g, ' ').replace(/\.(html|php|aspx?)$/i,'') : val;
 
   const prompt = isYT
-    ? `Generate a quiz topic summary for a YouTube video. URL: ${val}. Based on the video ID or any title hints in the URL, describe what educational topic this video likely covers in 3-4 sentences. If you cannot tell, describe a general educational topic related to the channel or keywords in the URL. Just write the description, no preamble.`
-    : `I want to create a quiz from this URL: ${val}. Based on the URL path and domain (${pathHint}), identify the main educational topic or subject matter and describe it in 4-5 sentences covering the key concepts someone would learn from this page. Focus on the actual subject — not the website itself. Just write the topic summary, no preamble.`;
+    ? `Generate a quiz topic summary for a YouTube video. URL: ${val}. Based on the video ID or any title hints in the URL, describe what educational topic this video likely covers in 3-4 sentences. Just write the description, no preamble.`
+    : `I want to create a quiz from this URL: ${val}. Based on the URL path and domain (${pathHint}), identify the main educational topic or subject matter and summarize it in 4-5 sentences. Focus purely on the subject being taught — not the website design, tools, or interface. Just write the topic summary, no preamble.`;
 
   try {
     const summary = await callGroq(prompt);
     return summary.trim();
   } catch(e) {
-    toast('Could not process URL, using as topic');
-    return pathHint;
+    toast('Could not process URL. Try typing the topic instead.');
+    return '';
   }
 }
 
