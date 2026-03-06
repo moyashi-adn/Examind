@@ -1073,17 +1073,14 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
     <div class="sec active" id="sec-quiz">
 
       <div id="quizInput">
-        <label>Topic, URL, notes, or upload a file</label>
-        <div class="upload-area">
-          <label class="upload-btn" for="fileUpload">
-            📎 Upload file
-          </label>
-          <input type="file" id="fileUpload" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFileUpload(this)">
-          <div class="upload-types">PDF, Word, TXT, or image</div>
+        <label>Topic or paste your notes</label>
+        <textarea id="topicInput" placeholder="e.g. World War II, Photosynthesis, Cell Biology..."></textarea>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label class="upload-btn" for="fileUpload">📎 Upload file</label>
+          <input type="file" id="fileUpload" accept=".pdf,.txt,.docx,.doc" style="display:none" onchange="handleFileUpload(this)">
+          <span class="upload-types">PDF, Word, or TXT</span>
           <div id="fileTag"></div>
         </div>
-        <textarea id="topicInput" placeholder="e.g. World War II, Photosynthesis, or paste your notes here..."></textarea>
-        <div class="url-note" id="inputHint" style="margin-top:8px"></div>
         <div class="row">
           <div class="field">
             <label>Questions</label>
@@ -1164,16 +1161,14 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
     <!-- ===== FLASHCARDS ===== -->
     <div class="sec hidden" id="sec-flash">
       <div id="flashInput">
-        <label>Topic, URL, notes, or upload a file</label>
-        <div class="upload-area">
-          <label class="upload-btn" for="flashFileUpload">
-            📎 Upload file
-          </label>
-          <input type="file" id="flashFileUpload" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFlashFileUpload(this)">
-          <div class="upload-types">PDF, Word, TXT, or image</div>
+        <label>Topic or paste your notes</label>
+        <textarea id="flashTopic" placeholder="e.g. Spanish verbs, Periodic table, Cell Biology..."></textarea>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label class="upload-btn" for="flashFileUpload">📎 Upload file</label>
+          <input type="file" id="flashFileUpload" accept=".pdf,.txt,.docx,.doc" style="display:none" onchange="handleFlashFileUpload(this)">
+          <span class="upload-types">PDF, Word, or TXT</span>
           <div id="flashFileTag"></div>
         </div>
-        <textarea id="flashTopic" placeholder="e.g. Spanish verbs, Periodic table, or paste your notes here..."></textarea>
         <div class="row">
           <div class="field">
             <label>Cards</label>
@@ -1364,31 +1359,37 @@ async function generateQuiz() {
 
   try {
     const material = await resolveInput(t);
-    if (!material) { hide('quizLoading'); show('quizInput'); toast('Could not get content. Try a different topic.'); return; }
+    if (!material || material.trim().length < 2) {
+      hide('quizLoading'); show('quizInput');
+      toast('Please enter a topic or upload a file first');
+      return;
+    }
     topic = material.length > 80 ? material.slice(0, 80) + '...' : material;
 
-    const isLongText = material.length > 300;
-    const prompt = isLongText
-      ? `Create ${n} quiz questions from this study material. Difficulty: ${diff}. ${typeMap[type]}
-Return ONLY valid JSON array, no markdown:
-[{"type":"multiple_choice","question":"...","options":["A","B","C","D"],"answer":0,"hint":"brief hint","explanation":"..."},
+    const isNotes = material.length > 200;
+    const prompt = isNotes
+      ? `Create exactly ${n} quiz questions based on the following study material. Difficulty: ${diff}. ${typeMap[type]}
+IMPORTANT: Questions must be strictly based on the content provided below. Return ONLY a valid JSON array, no markdown, no extra text.
+[{"type":"multiple_choice","question":"...","options":["A","B","C","D"],"answer":0,"hint":"one sentence hint","explanation":"..."},
 {"type":"true_false","question":"...","options":["True","False"],"answer":0,"hint":"...","explanation":"..."},
 {"type":"fill_blank","question":"The ___ is...","options":[],"answer":"word","hint":"...","explanation":"..."}]
-For MC/TF: answer = index. For fill_blank: answer = string.
+For MC/TF: answer = index (0-based). For fill_blank: answer = correct word/phrase as string.
 
 Study material:
 ${material.slice(0, 6000)}`
-      : `Create ${n} quiz questions about: "${material}". Difficulty: ${diff}. ${typeMap[type]}
-Return ONLY valid JSON array, no markdown:
-[{"type":"multiple_choice","question":"...","options":["A","B","C","D"],"answer":0,"hint":"brief hint","explanation":"..."},
+      : `Create exactly ${n} quiz questions about the topic: "${material}". Difficulty: ${diff}. ${typeMap[type]}
+IMPORTANT: ALL questions must be strictly about "${material}" only. Return ONLY a valid JSON array, no markdown, no extra text.
+[{"type":"multiple_choice","question":"...","options":["A","B","C","D"],"answer":0,"hint":"one sentence hint","explanation":"..."},
 {"type":"true_false","question":"...","options":["True","False"],"answer":0,"hint":"...","explanation":"..."},
 {"type":"fill_blank","question":"The ___ is...","options":[],"answer":"word","hint":"...","explanation":"..."}]
-For MC/TF: answer = index. For fill_blank: answer = string.`;
+For MC/TF: answer = index (0-based). For fill_blank: answer = correct word/phrase as string.`;
 
     const res = await callGroq(prompt);
-    let text = res.replace(/```json|```/g, '').trim();
+    let text = res.replace(/\`\`\`json|\`\`\`/g, '').trim();
     const s = text.indexOf('['), e = text.lastIndexOf(']') + 1;
+    if (s === -1 || e === 0) throw new Error('Could not parse quiz. Please try again.');
     questions = JSON.parse(text.slice(s, e));
+    if (!questions.length) throw new Error('No questions generated. Try a more specific topic.');
     cur = 0; score = 0; hintsUsed = 0;
     hide('quizLoading'); show('quizPlay');
     showQ();
@@ -1598,27 +1599,28 @@ function retakeQuiz() {
 async function handleFlashFileUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  flashFileName = file.name;
   const ext = file.name.split('.').pop().toLowerCase();
-  document.getElementById('flashFileTag').innerHTML = `
-    <div class="file-tag">
-      ${getFileIcon(ext)} ${file.name.length > 25 ? file.name.slice(0,25)+'...' : file.name}
-      <span class="remove-file" onclick="removeFlashFile()">✕</span>
-    </div>`;
+  const allowed = ['pdf','txt','docx','doc'];
+  if (!allowed.includes(ext)) { toast('Only PDF, Word, or TXT files are supported'); input.value=''; return; }
+
+  flashFileName = file.name;
+  const shortName = file.name.length > 22 ? file.name.slice(0,22)+'...' : file.name;
+  document.getElementById('flashFileTag').innerHTML =
+    `<span class="file-tag">${getFileIcon(ext)} ${shortName} <span style="cursor:pointer;margin-left:4px" onclick="removeFlashFile()">✕</span></span>`;
+
   document.getElementById('flashTopic').value = '';
   document.getElementById('flashTopic').placeholder = 'Reading file...';
   document.getElementById('flashTopic').disabled = true;
   try {
     if (ext === 'pdf') flashFileContent = await readPDF(file);
     else if (ext === 'txt') flashFileContent = await readAsText(file);
-    else if (ext === 'docx' || ext === 'doc') flashFileContent = await readDOCX(file);
-    else if (['png','jpg','jpeg','webp'].includes(ext)) flashFileContent = await readImageAsBase64(file);
-    else { toast('Unsupported file type'); removeFlashFile(); return; }
-    document.getElementById('flashTopic').placeholder = `✓ ${file.name} loaded — click Generate!`;
+    else flashFileContent = await readDOCX(file);
+    if (!flashFileContent || flashFileContent.trim().length < 20) throw new Error('File appears empty or could not be read');
+    document.getElementById('flashTopic').placeholder = `✓ ${shortName} ready`;
     document.getElementById('flashTopic').disabled = false;
     toast('File loaded ✓');
   } catch(e) {
-    toast('Could not read file: ' + e.message);
+    toast(e.message);
     removeFlashFile();
   }
   input.value = '';
@@ -1628,9 +1630,10 @@ function removeFlashFile() {
   flashFileContent = '';
   flashFileName = '';
   document.getElementById('flashFileTag').innerHTML = '';
-  document.getElementById('flashTopic').placeholder = 'Type a topic, paste a URL, or paste your notes...';
+  document.getElementById('flashTopic').placeholder = 'e.g. Spanish verbs, Periodic table, Cell Biology...';
   document.getElementById('flashTopic').disabled = false;
   document.getElementById('flashTopic').value = '';
+  document.getElementById('flashFileUpload').value = '';
 }
 
 // FLASHCARDS
@@ -1642,10 +1645,16 @@ async function generateFlash() {
   const n = document.getElementById('numCards').value;
   show('flashLoading'); hide('flashInput');
   try {
-    let material = flashFileContent || await resolveInput(t);
-    const prompt = material.length > 300
-      ? `Create ${n} flashcards from this study material. Return ONLY valid JSON array: [{"front":"question or term","back":"answer or definition"}]\n\nMaterial:\n${material.slice(0, 6000)}`
-      : `Create ${n} flashcards about: "${material}". Return ONLY valid JSON array: [{"front":"question or term","back":"answer or definition"}]`;
+    const material = flashFileContent || t;
+    if (!material || material.trim().length < 2) {
+      hide('flashLoading'); show('flashInput');
+      toast('Please enter a topic or upload a file first');
+      return;
+    }
+    const isNotes = material.length > 200;
+    const prompt = isNotes
+      ? `Create exactly ${n} flashcards from this study material. Each card must be directly based on the content below. Return ONLY a valid JSON array, no markdown: [{"front":"question or key term","back":"answer or definition"}]\n\nStudy material:\n${material.slice(0, 6000)}`
+      : `Create exactly ${n} flashcards about: "${material}". ALL cards must be strictly about "${material}". Return ONLY a valid JSON array, no markdown: [{"front":"question or key term","back":"answer or definition"}]`;
     const res = await callGroq(prompt);
     let text = res.replace(/\`\`\`json|\`\`\`/g, '').trim();
     const s = text.indexOf('['), e = text.lastIndexOf(']') + 1;
@@ -1797,14 +1806,14 @@ function renderReview() {
 async function handleFileUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  uploadedFileName = file.name;
   const ext = file.name.split('.').pop().toLowerCase();
+  const allowed = ['pdf','txt','docx','doc'];
+  if (!allowed.includes(ext)) { toast('Only PDF, Word, or TXT files are supported'); input.value=''; return; }
 
-  document.getElementById('fileTag').innerHTML = `
-    <div class="file-tag">
-      ${getFileIcon(ext)} ${file.name.length > 25 ? file.name.slice(0,25)+'...' : file.name}
-      <span class="remove-file" onclick="removeFile()">✕</span>
-    </div>`;
+  uploadedFileName = file.name;
+  const shortName = file.name.length > 22 ? file.name.slice(0,22)+'...' : file.name;
+  document.getElementById('fileTag').innerHTML =
+    `<span class="file-tag">${getFileIcon(ext)} ${shortName} <span style="cursor:pointer;margin-left:4px" onclick="removeFile()">✕</span></span>`;
 
   document.getElementById('topicInput').value = '';
   document.getElementById('topicInput').placeholder = 'Reading file...';
@@ -1813,14 +1822,13 @@ async function handleFileUpload(input) {
   try {
     if (ext === 'pdf') uploadedFileContent = await readPDF(file);
     else if (ext === 'txt') uploadedFileContent = await readAsText(file);
-    else if (ext === 'docx' || ext === 'doc') uploadedFileContent = await readDOCX(file);
-    else if (['png','jpg','jpeg','webp'].includes(ext)) uploadedFileContent = await readImageAsBase64(file);
-    else { toast('Unsupported file type'); removeFile(); return; }
-    document.getElementById('topicInput').placeholder = `✓ ${file.name} loaded — click Generate Quiz!`;
+    else uploadedFileContent = await readDOCX(file);
+    if (!uploadedFileContent || uploadedFileContent.trim().length < 20) throw new Error('File appears empty or could not be read');
+    document.getElementById('topicInput').placeholder = `✓ ${shortName} ready`;
     document.getElementById('topicInput').disabled = false;
     toast('File loaded ✓');
   } catch(e) {
-    toast('Could not read file: ' + e.message);
+    toast(e.message);
     removeFile();
   }
   input.value = '';
@@ -1837,9 +1845,10 @@ function removeFile() {
   uploadedFileContent = '';
   uploadedFileName = '';
   document.getElementById('fileTag').innerHTML = '';
-  document.getElementById('topicInput').placeholder = 'Type a topic, paste a URL (YouTube/article), or paste your study notes / document text here...';
+  document.getElementById('topicInput').placeholder = 'e.g. World War II, Photosynthesis, Cell Biology...';
   document.getElementById('topicInput').disabled = false;
   document.getElementById('topicInput').value = '';
+  document.getElementById('fileUpload').value = '';
 }
 
 function readAsText(file) {
@@ -1903,94 +1912,12 @@ function loadScript(src) {
   });
 }
 
-// SMART INPUT DETECTION
-function isURL(str) {
-  return str.startsWith('http://') || str.startsWith('https://') || str.startsWith('www.');
-}
-
-function isYouTube(str) {
-  return str.includes('youtube.com') || str.includes('youtu.be');
-}
-
-function detectInputType(val) {
-  const hint = document.getElementById('inputHint');
-  if (!hint) return;
-  if (uploadedFileContent) { hint.textContent = ''; return; }
-  if (!val.trim()) { hint.textContent = ''; return; }
-  if (isYouTube(val.trim())) hint.textContent = '🎥 YouTube URL detected — will generate quiz from video topic';
-  else if (isURL(val.trim())) hint.textContent = '🔗 URL detected — will generate quiz from article content';
-  else if (val.length > 200) hint.textContent = '📄 Long text detected — will generate quiz from your notes';
-  else hint.textContent = '✏️ Topic detected — will generate quiz on this subject';
-}
-
+// INPUT RESOLUTION
 async function resolveInput(raw) {
-  // If file was uploaded, use file content
-  if (uploadedFileContent) {
-    const ext = uploadedFileName.split('.').pop().toLowerCase();
-    if (['png','jpg','jpeg','webp'].includes(ext)) {
-      toast('Analyzing image...');
-      try {
-        const base64 = uploadedFileContent.split(',')[1];
-        const mimeType = uploadedFileContent.split(';')[0].split(':')[1];
-        const res = await fetch('/.netlify/functions/quiz', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: `This is a photo of study material such as handwritten notes, a textbook page, a worksheet, or a diagram. Please read and extract ALL the text, facts, concepts, formulas, dates, definitions, and any other educational content you can see. Ignore any mention of the image format or file type. Provide a detailed summary of the actual subject matter so I can generate quiz questions from it. Just write the educational content, no preamble.`,
-            image: { base64, mimeType }
-          })
-        });
-        if (res.ok) {
-          const d = await res.json();
-          if (d.result && d.result.length > 50) return d.result;
-        }
-      } catch(e) {}
-      toast('Could not read image content. Try uploading a clearer photo or PDF instead.');
-      return '';
-    }
-    // For text-based files, use extracted text directly
-    return uploadedFileContent;
-  }
-
-  const val = raw.trim();
-  if (!val) return '';
-  if (!isURL(val)) return val; // plain text or notes — use as-is
-
-  toast('Fetching content...');
-  const isYT = isYouTube(val);
-
-  // For URLs, ask AI to generate quiz based on the URL path/domain topic
-  // rather than trying to scrape (which doesn't work from frontend)
-  // Block non-educational URLs
-  const nonEduDomains = ['canva.com','facebook.com','instagram.com','twitter.com','x.com','tiktok.com','pinterest.com','linkedin.com','reddit.com','netflix.com','spotify.com','twitch.tv','discord.com','whatsapp.com'];
-  const urlObj = (() => { try { return new URL(val.startsWith('http') ? val : 'https://' + val); } catch(e) { return null; } })();
-  const hostname = urlObj ? urlObj.hostname.replace('www.','') : '';
-
-  if (nonEduDomains.some(d => hostname.includes(d))) {
-    toast('That URL is not a study resource. Try a YouTube video, article, or Wikipedia link.');
-    return '';
-  }
-
-  const pathHint = urlObj ? (urlObj.hostname + urlObj.pathname).replace(/[-_/]/g, ' ').replace(/\.(html|php|aspx?)$/i,'') : val;
-
-  const prompt = isYT
-    ? `Generate a quiz topic summary for a YouTube video. URL: ${val}. Based on the video ID or any title hints in the URL, describe what educational topic this video likely covers in 3-4 sentences. Just write the description, no preamble.`
-    : `I want to create a quiz from this URL: ${val}. Based on the URL path and domain (${pathHint}), identify the main educational topic or subject matter and summarize it in 4-5 sentences. Focus purely on the subject being taught — not the website design, tools, or interface. Just write the topic summary, no preamble.`;
-
-  try {
-    const summary = await callGroq(prompt);
-    return summary.trim();
-  } catch(e) {
-    toast('Could not process URL. Try typing the topic instead.');
-    return '';
-  }
+  if (uploadedFileContent) return uploadedFileContent;
+  return raw.trim();
 }
 
-// Attach input listener
-document.addEventListener('DOMContentLoaded', () => {
-  const ta = document.getElementById('topicInput');
-  if (ta) ta.addEventListener('input', () => detectInputType(ta.value));
-});
 
 // PDF DOWNLOAD
 function downloadPDF() {
