@@ -1079,7 +1079,7 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
             📎 Upload file
           </label>
           <input type="file" id="fileUpload" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFileUpload(this)">
-          <div class="upload-types">PDF, Word, TXT, or image of notes</div>
+          <div class="upload-types">PDF, Word, TXT, or image</div>
           <div id="fileTag"></div>
         </div>
         <textarea id="topicInput" placeholder="e.g. World War II, Photosynthesis, or paste your notes here..."></textarea>
@@ -1170,7 +1170,7 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
             📎 Upload file
           </label>
           <input type="file" id="flashFileUpload" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFlashFileUpload(this)">
-          <div class="upload-types">PDF, Word, TXT, or image of notes</div>
+          <div class="upload-types">PDF, Word, TXT, or image</div>
           <div id="flashFileTag"></div>
         </div>
         <textarea id="flashTopic" placeholder="e.g. Spanish verbs, Periodic table, or paste your notes here..."></textarea>
@@ -1251,6 +1251,11 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
 </div>
 
 <script>
+// ======================================================
+// LOCAL TEST KEY — remove before uploading to GitHub!
+const LOCAL_TEST_KEY = '';
+// ======================================================
+
 // STATE
 // API key is server-side
 let questions = [], cur = 0, score = 0, answered = false, topic = '';
@@ -1293,11 +1298,6 @@ function saveName() {
   localStorage.setItem('examind_name', playerName);
   toast('Name saved ✓');
 }
-
-// ======================================================
-// LOCAL TEST KEY — remove before uploading to GitHub!
-const LOCAL_TEST_KEY = '';
-// ======================================================
 
 async function callGroq(prompt) {
   // If local test key is set, call Groq directly (for testing only)
@@ -1605,14 +1605,16 @@ async function handleFlashFileUpload(input) {
       ${getFileIcon(ext)} ${file.name.length > 25 ? file.name.slice(0,25)+'...' : file.name}
       <span class="remove-file" onclick="removeFlashFile()">✕</span>
     </div>`;
+  document.getElementById('flashTopic').value = '';
   document.getElementById('flashTopic').placeholder = 'Reading file...';
   document.getElementById('flashTopic').disabled = true;
   try {
-    if (ext === 'txt') flashFileContent = await readAsText(file);
-    else if (ext === 'pdf') flashFileContent = await readPDF(file);
+    if (ext === 'pdf') flashFileContent = await readPDF(file);
+    else if (ext === 'txt') flashFileContent = await readAsText(file);
     else if (ext === 'docx' || ext === 'doc') flashFileContent = await readDOCX(file);
-    else flashFileContent = await readImageAsBase64(file);
-    document.getElementById('flashTopic').placeholder = `File loaded: ${file.name} — click Generate!`;
+    else if (['png','jpg','jpeg','webp'].includes(ext)) flashFileContent = await readImageAsBase64(file);
+    else { toast('Unsupported file type'); removeFlashFile(); return; }
+    document.getElementById('flashTopic').placeholder = `✓ ${file.name} loaded — click Generate!`;
     document.getElementById('flashTopic').disabled = false;
     toast('File loaded ✓');
   } catch(e) {
@@ -1798,27 +1800,23 @@ async function handleFileUpload(input) {
   uploadedFileName = file.name;
   const ext = file.name.split('.').pop().toLowerCase();
 
-  // Show file tag
   document.getElementById('fileTag').innerHTML = `
     <div class="file-tag">
       ${getFileIcon(ext)} ${file.name.length > 25 ? file.name.slice(0,25)+'...' : file.name}
       <span class="remove-file" onclick="removeFile()">✕</span>
     </div>`;
 
+  document.getElementById('topicInput').value = '';
   document.getElementById('topicInput').placeholder = 'Reading file...';
   document.getElementById('topicInput').disabled = true;
 
   try {
-    if (ext === 'txt') {
-      uploadedFileContent = await readAsText(file);
-    } else if (ext === 'pdf') {
-      uploadedFileContent = await readPDF(file);
-    } else if (ext === 'docx' || ext === 'doc') {
-      uploadedFileContent = await readDOCX(file);
-    } else if (['png','jpg','jpeg','webp'].includes(ext)) {
-      uploadedFileContent = await readImageAsBase64(file);
-    }
-    document.getElementById('topicInput').placeholder = `File loaded: ${file.name} — click Generate Quiz!`;
+    if (ext === 'pdf') uploadedFileContent = await readPDF(file);
+    else if (ext === 'txt') uploadedFileContent = await readAsText(file);
+    else if (ext === 'docx' || ext === 'doc') uploadedFileContent = await readDOCX(file);
+    else if (['png','jpg','jpeg','webp'].includes(ext)) uploadedFileContent = await readImageAsBase64(file);
+    else { toast('Unsupported file type'); removeFile(); return; }
+    document.getElementById('topicInput').placeholder = `✓ ${file.name} loaded — click Generate Quiz!`;
     document.getElementById('topicInput').disabled = false;
     toast('File loaded ✓');
   } catch(e) {
@@ -1854,21 +1852,29 @@ function readAsText(file) {
 }
 
 async function readPDF(file) {
-  // Load PDF.js from CDN
-  if (!window.pdfjsLib) {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  try {
+    if (!window.pdfjsLib) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= Math.min(pdf.numPages, 15); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    if (!text.trim()) throw new Error('no text');
+    return text.slice(0, 8000);
+  } catch(e) {
+    // Fallback: read as text (works for some PDFs)
+    try {
+      const text = await readAsText(file);
+      if (text && text.length > 50) return text.slice(0, 8000);
+    } catch(_) {}
+    throw new Error('Could not read PDF. Make sure it has selectable text (not a scanned image). Try copying your text and pasting it directly instead.');
   }
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let text = '';
-  for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(item => item.str).join(' ') + '\n';
-  }
-  if (!text.trim()) throw new Error('PDF appears to be scanned — try an image instead');
-  return text.slice(0, 8000);
 }
 
 async function readDOCX(file) {
