@@ -1954,7 +1954,7 @@ async function resolveInput(raw) {
         // Send actual base64 image to AI for real OCR/analysis
         const base64 = uploadedFileContent.split(',')[1];
         const mimeType = uploadedFileContent.split(';')[0].split(':')[1];
-        const res = await fetch('/api/quiz', {
+        const res = await fetch('/.netlify/functions/quiz', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
