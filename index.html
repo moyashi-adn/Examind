@@ -1255,6 +1255,8 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
 // API key is server-side
 let questions = [], cur = 0, score = 0, answered = false, topic = '';
 let flashcards = [], fIdx = 0;
+let uploadedFileContent = '', uploadedFileName = '';
+let flashFileContent = '', flashFileName = '';
 let history = JSON.parse(localStorage.getItem('examind_history') || '[]');
 let lb = JSON.parse(localStorage.getItem('examind_lb') || '[]');
 let playerName = localStorage.getItem('examind_name') || 'Anonymous';
@@ -1592,8 +1594,6 @@ function retakeQuiz() {
 }
 
 // FLASH FILE UPLOAD
-let flashFileContent = '';
-let flashFileName = '';
 
 async function handleFlashFileUpload(input) {
   const file = input.files[0];
@@ -1791,8 +1791,6 @@ function renderReview() {
 }
 
 // FILE UPLOAD
-let uploadedFileContent = '';
-let uploadedFileName = '';
 
 async function handleFileUpload(input) {
   const file = input.files[0];
