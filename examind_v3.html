@@ -47,6 +47,8 @@ body.dark .nav-link-primary:hover { background: #fff; color: #111; }
 body.dark .nav-link:hover { background: #2a2a2a; color: #f0f0f0; }
 body.dark .feat { background: #1a1a1a; }
 body.dark .timer.urgent { background: #2d0000; }
+body.dark .btn-primary { background: #f0f0f0; color: #111; }
+body.dark .btn-primary:hover:not(:disabled) { background: #fff; color: #111; }
 
 .theme-toggle {
   width: 36px; height: 36px;
@@ -865,12 +867,7 @@ select option { background: #fff; }
 <div class="page" id="page-app">
   <div class="app-wrap">
 
-    <!-- API KEY -->
-    <div class="api-row">
-      <input type="password" id="apiKeyInput" placeholder="Groq API key (gsk_...)">
-      <button class="btn btn-ghost" onclick="saveKey()">Save</button>
-      <a href="https://console.groq.com" target="_blank" style="font-size:0.75rem;color:var(--muted);text-decoration:none;white-space:nowrap;padding:7px 0">Get key →</a>
-    </div>
+    <!-- API handled server-side -->
 
     <!-- TABS -->
     <div class="tabs">
@@ -1035,7 +1032,7 @@ select option { background: #fff; }
 
 <script>
 // STATE
-let apiKey = localStorage.getItem('examind_key') || '';
+// API key is server-side
 let questions = [], cur = 0, score = 0, answered = false, topic = '';
 let flashcards = [], fIdx = 0;
 let history = JSON.parse(localStorage.getItem('examind_history') || '[]');
@@ -1043,7 +1040,7 @@ let lb = JSON.parse(localStorage.getItem('examind_lb') || '[]');
 let playerName = localStorage.getItem('examind_name') || 'Anonymous';
 let timerInt = null, timeLeft = 0, hintsUsed = 0;
 
-if (apiKey) document.getElementById('apiKeyInput').value = apiKey;
+
 if (playerName !== 'Anonymous') document.getElementById('playerName').value = playerName;
 
 // NAV
@@ -1064,14 +1061,7 @@ function switchSec(s, el) {
 }
 
 // API
-function saveKey() {
-  const v = document.getElementById('apiKeyInput').value.trim();
-  if (!v) { toast('Paste your API key first'); return; }
-  if (!v.startsWith('sk-') && !v.startsWith('gsk_')) { toast('Key should start with gsk_'); return; }
-  apiKey = v;
-  localStorage.setItem('examind_key', apiKey);
-  toast('Key saved ✓');
-}
+// API key handled server-side
 
 function saveName() {
   playerName = document.getElementById('playerName').value.trim() || 'Anonymous';
@@ -1080,26 +1070,22 @@ function saveName() {
 }
 
 async function callGroq(prompt) {
-  const k = document.getElementById('apiKeyInput').value.trim() || apiKey;
-  if (!k) throw new Error('No API key');
-  apiKey = k;
   let res;
   try {
-    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    res = await fetch('/api/quiz', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + k },
-      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], max_tokens: 3000, temperature: 0.7 })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
   } catch(e) { throw new Error('Network error. Check your connection.'); }
   if (!res.ok) {
     let msg = 'Error ' + res.status;
-    try { const d = await res.json(); msg = d.error?.message || msg; } catch(_){}
-    if (res.status === 401) throw new Error('Invalid API key.');
+    try { const d = await res.json(); msg = d.error || msg; } catch(_){}
     if (res.status === 429) throw new Error('Rate limit. Try again shortly.');
     throw new Error(msg);
   }
   const d = await res.json();
-  return d.choices[0].message.content;
+  return d.result;
 }
 
 // QUIZ
