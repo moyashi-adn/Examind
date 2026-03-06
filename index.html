@@ -858,26 +858,33 @@ body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-colo
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 5px 10px 5px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 100px;
   font-size: 0.75rem;
   color: var(--text);
   font-weight: 500;
-  max-width: 200px;
+  max-width: 260px;
+}
+
+.file-tag .fname {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
 .file-tag .remove-file {
   cursor: pointer;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   flex-shrink: 0;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 4px;
 }
-.file-tag .remove-file:hover { color: var(--wrong); }
+.file-tag .remove-file:hover { color: var(--wrong); background: var(--border); }
 
 .upload-types {
   font-size: 0.72rem;
@@ -1342,8 +1349,13 @@ async function callGroq(prompt) {
 async function generateQuiz() {
   const t = document.getElementById('topicInput').value.trim();
   if (!t && !uploadedFileContent) { toast('Enter a topic or upload a file first'); return; }
-  if (t && t.length < 3 && !uploadedFileContent) { toast('Topic is too short — be more specific!'); return; }
-  if (t && /^[^a-zA-Z0-9À-ž]+$/.test(t) && !uploadedFileContent) { toast('Please enter a valid topic'); return; }
+  if (t && !uploadedFileContent) {
+    const words = t.split(/\s+/);
+    const gibberish = words.every(w => w.length > 2 && !/[aeiou]/i.test(w));
+    const allSymbols = /^[^a-zA-Z0-9]+$/.test(t);
+    const tooRandom = t.length > 4 && /^[a-z]{8,}$/i.test(t) && !/[aeiou]{1}/i.test(t);
+    if (allSymbols || gibberish || tooRandom) { toast("That doesn't look like a real topic. Try something like \"Biology\" or \"World War II\""); return; }
+  }
   const n = document.getElementById('numQ').value;
   const diff = document.getElementById('difficulty').value;
   const type = document.getElementById('qType').value;
@@ -1606,7 +1618,7 @@ async function handleFlashFileUpload(input) {
   flashFileName = file.name;
   const shortName = file.name.length > 22 ? file.name.slice(0,22)+'...' : file.name;
   document.getElementById('flashFileTag').innerHTML =
-    `<span class="file-tag">${getFileIcon(ext)} ${shortName} <span style="cursor:pointer;margin-left:4px" onclick="removeFlashFile()">✕</span></span>`;
+    `<span class="file-tag">${getFileIcon(ext)} <span class="fname">${shortName}</span><span class="remove-file" onclick="removeFlashFile()">✕</span></span>`;
 
   document.getElementById('flashTopic').value = '';
   document.getElementById('flashTopic').placeholder = 'Reading file...';
@@ -1640,8 +1652,13 @@ function removeFlashFile() {
 async function generateFlash() {
   const t = document.getElementById('flashTopic').value.trim();
   if (!t && !flashFileContent) { toast('Enter a topic or upload a file first'); return; }
-  if (t && t.length < 3 && !flashFileContent) { toast('Topic is too short — be more specific!'); return; }
-  if (t && /^[^a-zA-Z0-9À-ž]+$/.test(t) && !flashFileContent) { toast('Please enter a valid topic'); return; }
+  if (t && !flashFileContent) {
+    const words = t.split(/\s+/);
+    const gibberish = words.every(w => w.length > 2 && !/[aeiou]/i.test(w));
+    const allSymbols = /^[^a-zA-Z0-9]+$/.test(t);
+    const tooRandom = t.length > 4 && /^[a-z]{8,}$/i.test(t) && !/[aeiou]{1}/i.test(t);
+    if (allSymbols || gibberish || tooRandom) { toast("That doesn't look like a real topic. Try something like \"Biology\" or \"History\""); return; }
+  }
   const n = document.getElementById('numCards').value;
   show('flashLoading'); hide('flashInput');
   try {
@@ -1813,7 +1830,7 @@ async function handleFileUpload(input) {
   uploadedFileName = file.name;
   const shortName = file.name.length > 22 ? file.name.slice(0,22)+'...' : file.name;
   document.getElementById('fileTag').innerHTML =
-    `<span class="file-tag">${getFileIcon(ext)} ${shortName} <span style="cursor:pointer;margin-left:4px" onclick="removeFile()">✕</span></span>`;
+    `<span class="file-tag">${getFileIcon(ext)} <span class="fname">${shortName}</span><span class="remove-file" onclick="removeFile()">✕</span></span>`;
 
   document.getElementById('topicInput').value = '';
   document.getElementById('topicInput').placeholder = 'Reading file...';
