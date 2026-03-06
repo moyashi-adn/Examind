@@ -1355,7 +1355,7 @@ async function callGroq(prompt) {
   // Production: call Vercel API route
   let res;
   try {
-    res = await fetch('/api/quiz', {
+    res = await fetch('/.netlify/functions/quiz', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
