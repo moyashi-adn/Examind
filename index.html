@@ -51,19 +51,19 @@ body.dark .btn-primary { background: #f0f0f0; color: #111; }
 body.dark .btn-primary:hover:not(:disabled) { background: #fff; color: #111; }
 
 .theme-toggle {
-  width: 36px; height: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  width: 32px; height: 32px;
+  border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
-  color: var(--text);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.6;
+  padding: 0;
 }
-.theme-toggle:hover { background: var(--border); }
+.theme-toggle:hover { opacity: 1; transform: scale(1.2); }
 
 body {
   font-family: 'Inter', sans-serif;
@@ -671,13 +671,15 @@ select option { background: #fff; }
 .divider { height: 1px; background: var(--border); margin: 24px 0; }
 
 /* FLASHCARDS */
-.fc-wrap { perspective: 1000px; margin: 24px 0; cursor: pointer; }
+.fc-wrap { perspective: 1200px; margin: 24px 0; cursor: pointer; }
 
 .flashcard {
   width: 100%; min-height: 200px;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.5s ease;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 .flashcard.flipped { transform: rotateY(180deg); }
 
@@ -796,6 +798,220 @@ select option { background: #fff; }
   .tabs { overflow-x: auto; }
   .tab { white-space: nowrap; }
 }
+
+/* STREAK */
+.streak-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  font-size: 0.83rem;
+}
+.streak-fire { font-size: 1.1rem; }
+.streak-info { flex: 1; }
+.streak-num { font-weight: 600; color: var(--text); }
+.streak-label { color: var(--muted); font-size: 0.75rem; }
+.streak-days { display: flex; gap: 5px; }
+.streak-day {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 600; color: var(--muted);
+}
+.streak-day.done { background: #22c55e; color: #fff; }
+.streak-day.today { border: 2px solid #22c55e; color: var(--text); background: var(--surface); }
+
+/* WRONG ANSWERS */
+.review-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.review-item:hover { border-color: var(--muted); }
+.review-q { font-size: 0.88rem; font-weight: 500; margin-bottom: 10px; color: var(--text); }
+.review-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.review-tag {
+  font-size: 0.72rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 100px;
+}
+.review-wrong-tag { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.review-correct-tag { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+body.dark .review-wrong-tag { background: #2d0000; color: #ef4444; border-color: #7f1d1d; }
+body.dark .review-correct-tag { background: #052e16; color: #22c55e; border-color: #14532d; }
+.review-expl { font-size: 0.78rem; color: var(--muted); line-height: 1.6; margin-top: 6px; }
+
+/* URL INPUT */
+.url-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.url-row input { flex: 1; min-width: 200px; }
+.url-note { font-size: 0.75rem; color: var(--muted); margin-bottom: 14px; }
+.input-hint { font-size: 0.73rem; color: var(--muted); margin-top: 6px; min-height: 16px; }
+
+.upload-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+.upload-btn:hover { border-color: var(--muted); color: var(--text); }
+
+.file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  color: var(--text);
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tag .remove-file {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.file-tag .remove-file:hover { color: var(--wrong); }
+
+.upload-types {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.uploading-state {
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* PDF DOWNLOAD BTN */
+.pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+  margin-left: 8px;
+}
+.pdf-btn:hover { color: var(--text); border-color: var(--muted); }
+
+/* CONFETTI */
+.confetti-piece {
+  position: fixed;
+  width: 8px; height: 8px;
+  top: -10px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* SHARE MODAL */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 420px;
+  width: 100%;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+.modal-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 20px; }
+
+.share-link-box {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.share-link-box input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--bg);
+  font-family: monospace;
+  outline: none;
+}
+.modal-close {
+  width: 100%;
+  padding: 10px;
+  background: var(--border);
+  border: none;
+  border-radius: 9px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--muted); color: #fff; }
+
+
 </style>
 </head>
 <body>
@@ -869,11 +1085,22 @@ select option { background: #fff; }
 
     <!-- API handled server-side -->
 
+    <!-- STREAK -->
+    <div class="streak-bar" id="streakBar">
+      <div class="streak-fire">🔥</div>
+      <div class="streak-info">
+        <div class="streak-num" id="streakNum">0 day streak</div>
+        <div class="streak-label">Keep it up — study every day!</div>
+      </div>
+      <div class="streak-days" id="streakDays"></div>
+    </div>
+
     <!-- TABS -->
     <div class="tabs">
       <button class="tab active" onclick="switchSec('quiz', this)">Quiz</button>
       <button class="tab" onclick="switchSec('flash', this)">Flashcards</button>
       <button class="tab" onclick="switchSec('history', this)">History</button>
+      <button class="tab" onclick="switchSec('review', this)">Review</button>
       <button class="tab" onclick="switchSec('leaderboard', this)">Leaderboard</button>
     </div>
 
@@ -881,8 +1108,17 @@ select option { background: #fff; }
     <div class="sec active" id="sec-quiz">
 
       <div id="quizInput">
-        <label>Topic or notes</label>
-        <textarea id="topicInput" placeholder="e.g. Photosynthesis, World War II, or paste your notes..."></textarea>
+        <label>Topic, URL, notes, or upload a file</label>
+        <div class="upload-area">
+          <label class="upload-btn" for="fileUpload">
+            📎 Upload file
+          </label>
+          <input type="file" id="fileUpload" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFileUpload(this)">
+          <div class="upload-types">PDF, Word, TXT, or image of notes</div>
+          <div id="fileTag"></div>
+        </div>
+        <textarea id="topicInput" placeholder="Type a topic, paste a URL (YouTube/article), or paste your study notes / document text here..."></textarea>
+        <div class="url-note" id="inputHint" style="margin-top:8px"></div>
         <div class="row">
           <div class="field">
             <label>Questions</label>
@@ -947,7 +1183,11 @@ select option { background: #fff; }
           <div class="score-pct" id="scorePct">0%</div>
           <div class="score-label" id="scoreLabel"></div>
           <div class="score-sub" id="scoreSub"></div>
-          <button class="share-link" onclick="shareResult()">📤 Share result</button>
+          <div style="display:flex;gap:0;justify-content:center;flex-wrap:wrap">
+            <button class="share-link" onclick="shareResult()">📤 Share result</button>
+            <button class="pdf-btn" onclick="downloadPDF()">📄 Download PDF</button>
+            <button class="pdf-btn" onclick="shareQuiz()">🔗 Share quiz</button>
+          </div>
           <div class="score-btns">
             <button class="btn btn-primary" style="width:auto;margin:0;padding:10px 24px" onclick="resetQuiz()">New quiz</button>
             <button class="btn btn-ghost" onclick="retakeQuiz()">Retake</button>
@@ -959,8 +1199,16 @@ select option { background: #fff; }
     <!-- ===== FLASHCARDS ===== -->
     <div class="sec hidden" id="sec-flash">
       <div id="flashInput">
-        <label>Topic or notes</label>
-        <textarea id="flashTopic" placeholder="e.g. Periodic table, Spanish verbs..."></textarea>
+        <label>Topic, URL, notes, or upload a file</label>
+        <div class="upload-area">
+          <label class="upload-btn" for="flashFileUpload">
+            📎 Upload file
+          </label>
+          <input type="file" id="flashFileUpload" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFlashFileUpload(this)">
+          <div class="upload-types">PDF, Word, TXT, or image of notes</div>
+          <div id="flashFileTag"></div>
+        </div>
+        <textarea id="flashTopic" placeholder="Type a topic, paste a URL, or paste your notes..."></textarea>
         <div class="row">
           <div class="field">
             <label>Cards</label>
@@ -1018,6 +1266,13 @@ select option { background: #fff; }
       <div id="historyList"></div>
     </div>
 
+    <!-- ===== REVIEW ===== -->
+    <div class="sec hidden" id="sec-review">
+      <div id="reviewList">
+        <div class="empty-state">No wrong answers yet.<br>Complete a quiz to see what you missed.</div>
+      </div>
+    </div>
+
     <!-- ===== LEADERBOARD ===== -->
     <div class="sec hidden" id="sec-leaderboard">
       <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap">
@@ -1042,6 +1297,8 @@ let timerInt = null, timeLeft = 0, hintsUsed = 0;
 
 
 if (playerName !== 'Anonymous') document.getElementById('playerName').value = playerName;
+initStreak();
+loadSharedQuiz();
 
 // NAV
 function switchPage(p) {
@@ -1058,6 +1315,7 @@ function switchSec(s, el) {
   el.classList.add('active');
   if (s === 'history') renderHistory();
   if (s === 'leaderboard') renderLB();
+  if (s === 'review') renderReview();
 }
 
 // API
@@ -1069,7 +1327,32 @@ function saveName() {
   toast('Name saved ✓');
 }
 
+// ======================================================
+// LOCAL TEST KEY — remove before uploading to GitHub!
+const LOCAL_TEST_KEY = '';
+// ======================================================
+
 async function callGroq(prompt) {
+  // If local test key is set, call Groq directly (for testing only)
+  if (LOCAL_TEST_KEY) {
+    let res;
+    try {
+      res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + LOCAL_TEST_KEY },
+        body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], max_tokens: 3000, temperature: 0.7 })
+      });
+    } catch(e) { throw new Error('Network error. Check your connection.'); }
+    if (!res.ok) {
+      let msg = 'Error ' + res.status;
+      try { const d = await res.json(); msg = d.error?.message || msg; } catch(_){}
+      throw new Error(msg);
+    }
+    const d = await res.json();
+    return d.choices[0].message.content;
+  }
+
+  // Production: call Vercel API route
   let res;
   try {
     res = await fetch('/api/quiz', {
@@ -1077,25 +1360,29 @@ async function callGroq(prompt) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
-  } catch(e) { throw new Error('Network error. Check your connection.'); }
+  } catch(e) {
+    throw new Error('Cannot reach server. Make sure the app is deployed on Vercel.');
+  }
   if (!res.ok) {
-    let msg = 'Error ' + res.status;
+    let msg = 'Server error ' + res.status;
     try { const d = await res.json(); msg = d.error || msg; } catch(_){}
-    if (res.status === 429) throw new Error('Rate limit. Try again shortly.');
+    if (res.status === 404) throw new Error('API route not found. Make sure api/quiz.js is uploaded to GitHub.');
+    if (res.status === 429) throw new Error('Rate limit hit. Wait a moment and try again.');
+    if (res.status === 500) throw new Error('Server error. Check your GROQ_API_KEY in Vercel environment variables.');
     throw new Error(msg);
   }
   const d = await res.json();
+  if (!d.result) throw new Error('Empty response from server.');
   return d.result;
 }
 
 // QUIZ
 async function generateQuiz() {
   const t = document.getElementById('topicInput').value.trim();
-  if (!t) { toast('Enter a topic first'); return; }
+  if (!t && !uploadedFileContent) { toast('Enter a topic or upload a file first'); return; }
   const n = document.getElementById('numQ').value;
   const diff = document.getElementById('difficulty').value;
   const type = document.getElementById('qType').value;
-  topic = t;
 
   show('quizLoading'); hide('quizInput');
 
@@ -1106,14 +1393,29 @@ async function generateQuiz() {
     mixed: 'Mix multiple_choice, true_false, and fill_blank types.'
   };
 
-  const prompt = `Create ${n} quiz questions about: "${t}". Difficulty: ${diff}. ${typeMap[type]}
+  try {
+    const material = await resolveInput(t);
+    if (!material) { hide('quizLoading'); show('quizInput'); toast('Could not get content. Try a different topic.'); return; }
+    topic = material.length > 80 ? material.slice(0, 80) + '...' : material;
+
+    const isLongText = material.length > 300;
+    const prompt = isLongText
+      ? `Create ${n} quiz questions from this study material. Difficulty: ${diff}. ${typeMap[type]}
+Return ONLY valid JSON array, no markdown:
+[{"type":"multiple_choice","question":"...","options":["A","B","C","D"],"answer":0,"hint":"brief hint","explanation":"..."},
+{"type":"true_false","question":"...","options":["True","False"],"answer":0,"hint":"...","explanation":"..."},
+{"type":"fill_blank","question":"The ___ is...","options":[],"answer":"word","hint":"...","explanation":"..."}]
+For MC/TF: answer = index. For fill_blank: answer = string.
+
+Study material:
+${material.slice(0, 6000)}`
+      : `Create ${n} quiz questions about: "${material}". Difficulty: ${diff}. ${typeMap[type]}
 Return ONLY valid JSON array, no markdown:
 [{"type":"multiple_choice","question":"...","options":["A","B","C","D"],"answer":0,"hint":"brief hint","explanation":"..."},
 {"type":"true_false","question":"...","options":["True","False"],"answer":0,"hint":"...","explanation":"..."},
 {"type":"fill_blank","question":"The ___ is...","options":[],"answer":"word","hint":"...","explanation":"..."}]
 For MC/TF: answer = index. For fill_blank: answer = string.`;
 
-  try {
     const res = await callGroq(prompt);
     let text = res.replace(/```json|```/g, '').trim();
     const s = text.indexOf('['), e = text.lastIndexOf(']') + 1;
@@ -1219,8 +1521,11 @@ function selectAns(idx, btn) {
   const q = questions[cur];
   const opts = document.querySelectorAll('.option');
   opts.forEach(o => o.classList.add('disabled'));
-  if (idx === q.answer) { btn.classList.add('correct'); score++; }
-  else { btn.classList.add('wrong'); opts[q.answer]?.classList.add('correct'); }
+  if (idx === q.answer) { btn.classList.add('correct'); score++; q._userWrong = false; playSound('correct'); }
+  else {
+    btn.classList.add('wrong'); opts[q.answer]?.classList.add('correct');
+    q._userWrong = true; q._userAns = q.options[idx]; playSound('wrong');
+  }
   document.getElementById('explanBox').innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
   show('explanBox'); show('nextBtn');
   document.getElementById('hintBtn').disabled = true;
@@ -1239,9 +1544,9 @@ function checkFill() {
   inp.disabled = true;
 
   if (userAns === correct || correct.includes(userAns) || userAns.includes(correct)) {
-    inp.classList.add('correct'); score++;
+    inp.classList.add('correct'); score++; q._userWrong = false; playSound('correct');
   } else {
-    inp.classList.add('wrong');
+    inp.classList.add('wrong'); q._userWrong = true; q._userAns = inp.value.trim(); playSound('wrong');
     const note = document.createElement('div');
     note.style.cssText = 'margin-top:6px;font-size:0.78rem;color:var(--correct)';
     note.textContent = `Correct: ${q.answer}`;
@@ -1276,7 +1581,7 @@ function showScore() {
   document.getElementById('scorePct').textContent = pct + '%';
 
   let label, sub;
-  if (pct === 100) { label = 'Perfect.'; sub = 'You got every question right.'; }
+  if (pct === 100) { label = 'Perfect.'; sub = 'You got every question right.'; launchConfetti(); playSound('perfect'); }
   else if (pct >= 80) { label = 'Excellent.'; sub = `${total - score} question${total-score>1?'s':''} missed. Almost perfect.`; }
   else if (pct >= 60) { label = 'Good job.'; sub = `${score} correct out of ${total}. Keep going.`; }
   else if (pct >= 40) { label = 'Keep studying.'; sub = `${score} correct out of ${total}. Review and retry.`; }
@@ -1285,6 +1590,8 @@ function showScore() {
   document.getElementById('scoreLabel').textContent = label;
   document.getElementById('scoreSub').textContent = sub;
 
+  saveWrongAnswers();
+  updateStreak();
   const entry = { topic, score, total, pct, date: new Date().toLocaleDateString('en-PH', {month:'short',day:'numeric',year:'numeric'}), diff: document.getElementById('difficulty').value, hints: hintsUsed };
   history.unshift(entry);
   if (history.length > 50) history.pop();
@@ -1307,6 +1614,7 @@ function shareResult() {
 function resetQuiz() {
   clearInterval(timerInt);
   questions = []; cur = 0; score = 0;
+  removeFile();
   hide('quizPlay'); hide('scoreCard'); hide('quizLoading');
   show('quizInput');
 }
@@ -1316,15 +1624,59 @@ function retakeQuiz() {
   hide('scoreCard'); show('quizPlay'); showQ();
 }
 
+// FLASH FILE UPLOAD
+let flashFileContent = '';
+let flashFileName = '';
+
+async function handleFlashFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  flashFileName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('flashFileTag').innerHTML = `
+    <div class="file-tag">
+      ${getFileIcon(ext)} ${file.name.length > 25 ? file.name.slice(0,25)+'...' : file.name}
+      <span class="remove-file" onclick="removeFlashFile()">✕</span>
+    </div>`;
+  document.getElementById('flashTopic').placeholder = 'Reading file...';
+  document.getElementById('flashTopic').disabled = true;
+  try {
+    if (ext === 'txt') flashFileContent = await readAsText(file);
+    else if (ext === 'pdf') flashFileContent = await readPDF(file);
+    else if (ext === 'docx' || ext === 'doc') flashFileContent = await readDOCX(file);
+    else flashFileContent = await readImageAsBase64(file);
+    document.getElementById('flashTopic').placeholder = `File loaded: ${file.name} — click Generate!`;
+    document.getElementById('flashTopic').disabled = false;
+    toast('File loaded ✓');
+  } catch(e) {
+    toast('Could not read file: ' + e.message);
+    removeFlashFile();
+  }
+  input.value = '';
+}
+
+function removeFlashFile() {
+  flashFileContent = '';
+  flashFileName = '';
+  document.getElementById('flashFileTag').innerHTML = '';
+  document.getElementById('flashTopic').placeholder = 'Type a topic, paste a URL, or paste your notes...';
+  document.getElementById('flashTopic').disabled = false;
+  document.getElementById('flashTopic').value = '';
+}
+
 // FLASHCARDS
 async function generateFlash() {
   const t = document.getElementById('flashTopic').value.trim();
-  if (!t) { toast('Enter a topic first'); return; }
+  if (!t && !flashFileContent) { toast('Enter a topic or upload a file first'); return; }
   const n = document.getElementById('numCards').value;
   show('flashLoading'); hide('flashInput');
   try {
-    const res = await callGroq(`Create ${n} flashcards about: "${t}". Return ONLY valid JSON array: [{"front":"question or term","back":"answer or definition"}]`);
-    let text = res.replace(/```json|```/g, '').trim();
+    let material = flashFileContent || await resolveInput(t);
+    const prompt = material.length > 300
+      ? `Create ${n} flashcards from this study material. Return ONLY valid JSON array: [{"front":"question or term","back":"answer or definition"}]\n\nMaterial:\n${material.slice(0, 6000)}`
+      : `Create ${n} flashcards about: "${material}". Return ONLY valid JSON array: [{"front":"question or term","back":"answer or definition"}]`;
+    const res = await callGroq(prompt);
+    let text = res.replace(/\`\`\`json|\`\`\`/g, '').trim();
     const s = text.indexOf('['), e = text.lastIndexOf(']') + 1;
     flashcards = JSON.parse(text.slice(s, e));
     fIdx = 0;
@@ -1334,18 +1686,22 @@ async function generateFlash() {
 }
 
 function showCard() {
-  const c = flashcards[fIdx];
-  document.getElementById('fcFront').textContent = c.front;
-  document.getElementById('fcBack').textContent = c.back;
-  document.getElementById('fcCount').textContent = `${fIdx+1} / ${flashcards.length}`;
-  document.getElementById('flashProgress').style.width = `${((fIdx+1)/flashcards.length)*100}%`;
-  document.getElementById('flashcard').classList.remove('flipped');
+  const card = document.getElementById('flashcard');
+  // Remove flipped first, then update content after transition settles
+  card.classList.remove('flipped');
+  setTimeout(() => {
+    const c = flashcards[fIdx];
+    document.getElementById('fcFront').textContent = c.front;
+    document.getElementById('fcBack').textContent = c.back;
+    document.getElementById('fcCount').textContent = `${fIdx+1} / ${flashcards.length}`;
+    document.getElementById('flashProgress').style.width = `${((fIdx+1)/flashcards.length)*100}%`;
+  }, 220);
 }
 
-function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); playSound('flip'); }
 function nextCard() { if (fIdx < flashcards.length-1) { fIdx++; showCard(); } }
 function prevCard() { if (fIdx > 0) { fIdx--; showCard(); } }
-function resetFlash() { hide('flashPlay'); show('flashInput'); }
+function resetFlash() { hide('flashPlay'); show('flashInput'); removeFlashFile(); }
 
 // HISTORY
 function renderHistory() {
@@ -1392,6 +1748,433 @@ function renderLB() {
       <div class="lb-pct">${e.pct}%</div>
     </div>`;
   }).join('');
+}
+
+
+// STREAK
+function initStreak() {
+  const today = new Date().toDateString();
+  let streak = JSON.parse(localStorage.getItem('examind_streak') || '{"count":0,"lastDate":"","days":[]}');
+  const days = ['S','M','T','W','T','F','S'];
+  const dayEls = document.getElementById('streakDays');
+  dayEls.innerHTML = days.map((d, i) => {
+    const isToday = new Date().getDay() === i;
+    const done = streak.days.includes(i);
+    return `<div class="streak-day ${done ? 'done' : isToday ? 'today' : ''}">${d}</div>`;
+  }).join('');
+  document.getElementById('streakNum').textContent = streak.count + (streak.count === 1 ? ' day streak' : ' day streak');
+}
+
+function updateStreak() {
+  const today = new Date().toDateString();
+  const todayIdx = new Date().getDay();
+  let streak = JSON.parse(localStorage.getItem('examind_streak') || '{"count":0,"lastDate":"","days":[]}');
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+
+  if (streak.lastDate === today) return;
+  if (streak.lastDate === yesterday.toDateString()) {
+    streak.count++;
+  } else if (streak.lastDate !== today) {
+    streak.count = 1;
+    if (streak.lastDate !== yesterday.toDateString()) streak.days = [];
+  }
+  streak.lastDate = today;
+  if (!streak.days.includes(todayIdx)) streak.days.push(todayIdx);
+  if (streak.days.length > 7) streak.days = streak.days.slice(-7);
+  localStorage.setItem('examind_streak', JSON.stringify(streak));
+  initStreak();
+loadSharedQuiz();
+}
+
+// WRONG ANSWERS REVIEW
+let wrongAnswers = JSON.parse(localStorage.getItem('examind_wrong') || '[]');
+
+function saveWrongAnswers() {
+  const wrongs = [];
+  questions.forEach((q, i) => {
+    if (q._userWrong) wrongs.unshift({ q: q.question, userAns: q._userAns || '(no answer)', correct: typeof q.answer === 'number' ? q.options[q.answer] : q.answer, expl: q.explanation, topic, date: new Date().toLocaleDateString('en-PH', {month:'short',day:'numeric'}) });
+  });
+  wrongAnswers = [...wrongs, ...wrongAnswers].slice(0, 50);
+  localStorage.setItem('examind_wrong', JSON.stringify(wrongAnswers));
+}
+
+function renderReview() {
+  const list = document.getElementById('reviewList');
+  if (!wrongAnswers.length) {
+    list.innerHTML = '<div class="empty-state">No wrong answers yet.<br>Complete a quiz to see what you missed.</div>';
+    return;
+  }
+  list.innerHTML = wrongAnswers.map(w => `
+    <div class="review-item">
+      <div class="review-q">${w.q}</div>
+      <div class="review-row">
+        <span class="review-tag review-wrong-tag">Your answer: ${w.userAns}</span>
+        <span class="review-tag review-correct-tag">Correct: ${w.correct}</span>
+      </div>
+      <div class="review-expl">${w.expl}</div>
+    </div>`).join('');
+}
+
+// FILE UPLOAD
+let uploadedFileContent = '';
+let uploadedFileName = '';
+
+async function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  uploadedFileName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  // Show file tag
+  document.getElementById('fileTag').innerHTML = `
+    <div class="file-tag">
+      ${getFileIcon(ext)} ${file.name.length > 25 ? file.name.slice(0,25)+'...' : file.name}
+      <span class="remove-file" onclick="removeFile()">✕</span>
+    </div>`;
+
+  document.getElementById('topicInput').placeholder = 'Reading file...';
+  document.getElementById('topicInput').disabled = true;
+
+  try {
+    if (ext === 'txt') {
+      uploadedFileContent = await readAsText(file);
+    } else if (ext === 'pdf') {
+      uploadedFileContent = await readPDF(file);
+    } else if (ext === 'docx' || ext === 'doc') {
+      uploadedFileContent = await readDOCX(file);
+    } else if (['png','jpg','jpeg','webp'].includes(ext)) {
+      uploadedFileContent = await readImageAsBase64(file);
+    }
+    document.getElementById('topicInput').placeholder = `File loaded: ${file.name} — click Generate Quiz!`;
+    document.getElementById('topicInput').disabled = false;
+    toast('File loaded ✓');
+  } catch(e) {
+    toast('Could not read file: ' + e.message);
+    removeFile();
+  }
+  input.value = '';
+}
+
+function getFileIcon(ext) {
+  if (ext === 'pdf') return '📄';
+  if (ext === 'docx' || ext === 'doc') return '📝';
+  if (ext === 'txt') return '📋';
+  return '🖼️';
+}
+
+function removeFile() {
+  uploadedFileContent = '';
+  uploadedFileName = '';
+  document.getElementById('fileTag').innerHTML = '';
+  document.getElementById('topicInput').placeholder = 'Type a topic, paste a URL (YouTube/article), or paste your study notes / document text here...';
+  document.getElementById('topicInput').disabled = false;
+  document.getElementById('topicInput').value = '';
+}
+
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.readAsText(file);
+  });
+}
+
+async function readPDF(file) {
+  // Load PDF.js from CDN
+  if (!window.pdfjsLib) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = '';
+  for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  if (!text.trim()) throw new Error('PDF appears to be scanned — try an image instead');
+  return text.slice(0, 8000);
+}
+
+async function readDOCX(file) {
+  if (!window.mammoth) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await window.mammoth.extractRawText({ arrayBuffer });
+  return result.value.slice(0, 8000);
+}
+
+function readImageAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result); // returns base64 data URL
+    reader.onerror = () => reject(new Error('Could not read image'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// SMART INPUT DETECTION
+function isURL(str) {
+  return str.startsWith('http://') || str.startsWith('https://') || str.startsWith('www.');
+}
+
+function isYouTube(str) {
+  return str.includes('youtube.com') || str.includes('youtu.be');
+}
+
+function detectInputType(val) {
+  const hint = document.getElementById('inputHint');
+  if (!hint) return;
+  if (uploadedFileContent) { hint.textContent = ''; return; }
+  if (!val.trim()) { hint.textContent = ''; return; }
+  if (isYouTube(val.trim())) hint.textContent = '🎥 YouTube URL detected — will generate quiz from video topic';
+  else if (isURL(val.trim())) hint.textContent = '🔗 URL detected — will generate quiz from article content';
+  else if (val.length > 200) hint.textContent = '📄 Long text detected — will generate quiz from your notes';
+  else hint.textContent = '✏️ Topic detected — will generate quiz on this subject';
+}
+
+async function resolveInput(raw) {
+  // If file was uploaded, use file content
+  if (uploadedFileContent) {
+    const ext = uploadedFileName.split('.').pop().toLowerCase();
+    if (['png','jpg','jpeg','webp'].includes(ext)) {
+      toast('Analyzing image...');
+      try {
+        // Send actual base64 image to AI for real OCR/analysis
+        const base64 = uploadedFileContent.split(',')[1];
+        const mimeType = uploadedFileContent.split(';')[0].split(':')[1];
+        const res = await fetch('/api/quiz', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `Look at this image carefully. Extract and summarize ALL the educational content, text, diagrams, and information visible in it. Write a detailed summary of the study material shown so I can generate quiz questions from it. Focus on the actual subject matter — facts, concepts, definitions, formulas, dates, or any learning content present. Just write the content summary, no preamble.`,
+            image: { base64, mimeType }
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          return d.result || uploadedFileName;
+        }
+      } catch(e) {}
+      return `Study material from image: ${uploadedFileName}`;
+    }
+    // For text-based files, use extracted text directly
+    return uploadedFileContent;
+  }
+
+  const val = raw.trim();
+  if (!val) return '';
+  if (!isURL(val)) return val; // plain text or notes — use as-is
+
+  toast('Fetching content...');
+  const isYT = isYouTube(val);
+
+  // For URLs, ask AI to generate quiz based on the URL path/domain topic
+  // rather than trying to scrape (which doesn't work from frontend)
+  const urlObj = (() => { try { return new URL(val.startsWith('http') ? val : 'https://' + val); } catch(e) { return null; } })();
+  const pathHint = urlObj ? (urlObj.hostname + urlObj.pathname).replace(/[-_/]/g, ' ').replace(/\.(html|php|aspx?)$/i, '') : val;
+
+  const prompt = isYT
+    ? `Generate a quiz topic summary for a YouTube video. URL: ${val}. Based on the video ID or any title hints in the URL, describe what educational topic this video likely covers in 3-4 sentences. If you cannot tell, describe a general educational topic related to the channel or keywords in the URL. Just write the description, no preamble.`
+    : `I want to create a quiz from this URL: ${val}. Based on the URL path and domain (${pathHint}), identify the main educational topic or subject matter and describe it in 4-5 sentences covering the key concepts someone would learn from this page. Focus on the actual subject — not the website itself. Just write the topic summary, no preamble.`;
+
+  try {
+    const summary = await callGroq(prompt);
+    return summary.trim();
+  } catch(e) {
+    toast('Could not process URL, using as topic');
+    return pathHint;
+  }
+}
+
+// Attach input listener
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('topicInput');
+  if (ta) ta.addEventListener('input', () => detectInputType(ta.value));
+});
+
+// PDF DOWNLOAD
+function downloadPDF() {
+  const total = questions.length;
+  const pct = Math.round((score/total)*100);
+  const date = new Date().toLocaleDateString('en-PH', {month:'long',day:'numeric',year:'numeric'});
+
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; color: #111; font-size: 14px; line-height: 1.6; }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    .meta { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+    .score-box { background: #f9f9f9; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px 20px; margin-bottom: 28px; }
+    .score-big { font-size: 2rem; font-weight: 700; }
+    .q-item { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+    .q-num { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .q-text { font-weight: 600; margin-bottom: 10px; }
+    .correct { color: #16a34a; font-weight: 600; }
+    .wrong { color: #dc2626; text-decoration: line-through; }
+    .expl { font-size: 0.82rem; color: #666; margin-top: 6px; }
+    @media print { body { margin: 20px; } }
+  </style></head><body>
+  <h1>Examind Quiz Result</h1>
+  <div class="meta">Topic: ${topic} · ${date}</div>
+  <div class="score-box">
+    <div class="score-big">${score}/${total}</div>
+    <div style="color:#888">${pct}% · ${document.getElementById('difficulty').value} difficulty</div>
+  </div>`;
+
+  questions.forEach((q, i) => {
+    const correctAns = typeof q.answer === 'number' ? q.options[q.answer] : q.answer;
+    const userCorrect = !q._userWrong;
+    html += `<div class="q-item">
+      <div class="q-num">Question ${i+1}</div>
+      <div class="q-text">${q.question}</div>
+      <div class="${userCorrect ? 'correct' : 'wrong'}">✓ ${correctAns}</div>
+      ${!userCorrect && q._userAns ? `<div style="color:#dc2626;font-size:0.82rem">Your answer: ${q._userAns}</div>` : ''}
+      <div class="expl">${q.explanation}</div>
+    </div>`;
+  });
+
+  html += `</body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+}
+
+
+// SOUNDS
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playSound(type) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+
+    if (type === 'correct') {
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } else if (type === 'wrong') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.setValueAtTime(150, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } else if (type === 'perfect') {
+      [523,659,784,1047].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = f;
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i*0.12);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.12 + 0.4);
+        o.start(ctx.currentTime + i*0.12);
+        o.stop(ctx.currentTime + i*0.12 + 0.4);
+      });
+    } else if (type === 'flip') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    }
+  } catch(e) {}
+}
+
+// CONFETTI
+function launchConfetti() {
+  const colors = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${Math.random()*100}vw;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${4 + Math.random()*6}px;
+      height: ${4 + Math.random()*6}px;
+      border-radius: ${Math.random()>0.5?'50%':'2px'};
+      animation-duration: ${1.5 + Math.random()*2}s;
+      animation-delay: ${Math.random()*0.8}s;
+    `;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+// SHAREABLE QUIZ LINK
+function shareQuiz() {
+  const quizData = {
+    topic,
+    questions: questions.map(q => ({
+      type: q.type, question: q.question,
+      options: q.options, answer: q.answer,
+      hint: q.hint, explanation: q.explanation
+    }))
+  };
+  const encoded = btoa(encodeURIComponent(JSON.stringify(quizData)));
+  const url = window.location.origin + window.location.pathname + '?quiz=' + encoded;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-title">📤 Share this Quiz</div>
+      <div class="modal-sub">Anyone with this link can take the same quiz</div>
+      <div class="share-link-box">
+        <input type="text" value="${url}" readonly id="shareUrlInput">
+        <button class="btn btn-ghost" onclick="copyShareLink()" style="white-space:nowrap;padding:9px 14px;font-size:0.8rem">Copy</button>
+      </div>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function copyShareLink() {
+  const input = document.getElementById('shareUrlInput');
+  navigator.clipboard.writeText(input.value).then(() => toast('Link copied! ✓'));
+}
+
+function loadSharedQuiz() {
+  const params = new URLSearchParams(window.location.search);
+  const quiz = params.get('quiz');
+  if (!quiz) return;
+  try {
+    const data = JSON.parse(decodeURIComponent(atob(quiz)));
+    questions = data.questions;
+    topic = data.topic;
+    switchPage('app');
+    show('quizPlay'); hide('quizInput');
+    cur = 0; score = 0; hintsUsed = 0;
+    showQ();
+    toast('Shared quiz loaded! ✓');
+  } catch(e) { console.error('Invalid quiz link'); }
 }
 
 // THEME
